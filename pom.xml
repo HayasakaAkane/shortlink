@@ -7,8 +7,16 @@
     <groupId>org.natsume.shortlink</groupId>
     <artifactId>shortlink-all</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <modules>
+        <module>admin</module>
+        <module>monitor</module>
+        <module>gateway</module>
+    </modules>
 
     <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <java.version>17</java.version>
         <spring-boot.version>3.0.7</spring-boot.version>
         <spring-cloud.version>2022.0.3</spring-cloud.version>
@@ -26,6 +34,14 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
