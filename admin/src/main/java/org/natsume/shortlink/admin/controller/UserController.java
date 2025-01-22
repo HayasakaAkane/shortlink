@@ -1,8 +1,10 @@
 package org.natsume.shortlink.admin.controller;
 
+import cn.hutool.core.bean.BeanUtil;
 import lombok.RequiredArgsConstructor;
 import org.natsume.shortlink.admin.common.convention.result.Result;
 import org.natsume.shortlink.admin.common.convention.result.Results;
+import org.natsume.shortlink.admin.dto.resp.UserActualRespDto;
 import org.natsume.shortlink.admin.dto.resp.UserRespDto;
 import org.natsume.shortlink.admin.service.UserService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +32,14 @@ public class UserController {
     @GetMapping("/api/shortlink/v1/user/{username}")
     public Result<UserRespDto> getUserByUsername(@PathVariable("username") String username) {
         return Results.success(userService.getUserByUsername(username));
+    }
+
+    /**
+     * 根据用户名查询用户无脱敏信息
+     */
+    @GetMapping("/api/shortlink/v1/actual/user/{username}")
+    public Result<UserActualRespDto> getActualUserByUsername(@PathVariable("username") String username) {
+        return Results.success(BeanUtil.toBean(userService.getUserByUsername(username), UserActualRespDto.class));
     }
 
 }

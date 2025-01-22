@@ -1,20 +1,18 @@
 package org.natsume.shortlink.admin.dto.resp;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
-import org.natsume.shortlink.admin.common.serialize.PhoneDesensitizationSerializer;
 
 /**
  * ClassName: UserRespDto
  * Package: org.natsume.shortlink.admin.dto.resp
- * Description: 用户返回参数响应
+ * Description: 用户返回参数响应，无脱敏
  *
  * @Author natsume
  * @Create 2025/1/18 19:25
  * @Version 1.0
  */
 @Data
-public class UserRespDto {
+public class UserActualRespDto {
 
     /**
      * ID
@@ -34,7 +32,6 @@ public class UserRespDto {
     /**
      * 手机号
      */
-    @JsonSerialize(using = PhoneDesensitizationSerializer.class)
     private String phone;
 
     /**
