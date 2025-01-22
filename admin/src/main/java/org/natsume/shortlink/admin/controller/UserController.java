@@ -3,7 +3,6 @@ package org.natsume.shortlink.admin.controller;
 import lombok.RequiredArgsConstructor;
 import org.natsume.shortlink.admin.common.convention.result.Result;
 import org.natsume.shortlink.admin.common.convention.result.Results;
-import org.natsume.shortlink.admin.common.enums.UserErrorCodeEnum;
 import org.natsume.shortlink.admin.dto.resp.UserRespDto;
 import org.natsume.shortlink.admin.service.UserService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,12 +29,7 @@ public class UserController {
      */
     @GetMapping("/api/shortlink/v1/user/{username}")
     public Result<UserRespDto> getUserByUsername(@PathVariable("username") String username) {
-        UserRespDto result = userService.getUserByUsername(username);
-        if(result == null) {
-            return new Result<UserRespDto>().setCode(UserErrorCodeEnum.USER_NULL.code()).setMessage(UserErrorCodeEnum.USER_NULL.message());
-        } else{
-            return Results.success(result);
-        }
+        return Results.success(userService.getUserByUsername(username));
     }
 
 }
