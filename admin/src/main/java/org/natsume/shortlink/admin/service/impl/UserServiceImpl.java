@@ -13,9 +13,12 @@ import org.natsume.shortlink.admin.dto.req.UserRegisterReqDTO;
 import org.natsume.shortlink.admin.dto.resp.UserRespDto;
 import org.natsume.shortlink.admin.service.UserService;
 import org.redisson.api.RBloomFilter;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import static org.natsume.shortlink.admin.common.constant.RedisCacheConstant.LOCK_USER_REGISTER_KEY;
 import static org.natsume.shortlink.admin.common.enums.UserErrorCodeEnum.USER_NAME_EXIST;
 import static org.natsume.shortlink.admin.common.enums.UserErrorCodeEnum.USER_SAVE_ERROR;
 
@@ -32,7 +35,11 @@ import static org.natsume.shortlink.admin.common.enums.UserErrorCodeEnum.USER_SA
 @RequiredArgsConstructor
 public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements UserService {
 
+    // 布隆过滤器
     private final RBloomFilter<String> userRegisterCachePenetrationBloomFilter;
+
+    // redis的分布式锁
+    private final RedissonClient redissonClient;
 
     @Override
     public UserRespDto getUserByUsername(String username) {
@@ -68,12 +75,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         if(hasUsername(requestParam.getUsername())) {
             throw new ClientException(USER_NAME_EXIST);
         }
-        // 向数据库中插入数据，影响行数保存在inserted
-        int inserted = baseMapper.insert(BeanUtil.toBean(requestParam, UserDO.class));
-        if(inserted < 1) { // inserted小于1，表示插入失败，抛出用户保存失败异常
-            throw new ClientException(USER_SAVE_ERROR);
+        // 获取分布式锁
+        RLock lock = redissonClient.getLock(LOCK_USER_REGISTER_KEY + requestParam.getUsername());
+        try {
+            // 如果tryLock成功了，就说明这个名字可以创建成功，tryLock失败，说明它在先前的请求中已经创建，所以直接抛用户名已存在异常
+            if(lock.tryLock()) {
+                // 向数据库中插入数据，影响行数保存在inserted
+                int inserted = baseMapper.insert(BeanUtil.toBean(requestParam, UserDO.class));
+                if(inserted < 1) { // inserted小于1，表示插入失败，抛出用户保存失败异常
+                    throw new ClientException(USER_SAVE_ERROR);
+                }
+                // 数据库插完之后也要往布隆过滤器中插入
+                userRegisterCachePenetrationBloomFilter.add(requestParam.getUsername());
+            }
+            throw new ClientException(USER_NAME_EXIST);
+        } finally {
+            // 最后都需要解锁
+            lock.unlock();
         }
-        // 数据库插完之后也要往布隆过滤器中插入
-        userRegisterCachePenetrationBloomFilter.add(requestParam.getUsername());
+
     }
 }
